@@ -1,0 +1,47 @@
+- name: build and install VMs
+  hosts: localhost
+  roles:
+    - { role: libvirt-build-vms, tags: [ 'build-vm' ] }
+
+- name: configure dhcp server
+  hosts: utility
+  roles:
+    - { role: config-dhcpd, tags: [ 'config-dhcpd'] }
+
+- name: configure tftp server
+  hosts: utility
+  roles:
+    - { role: config-tftpd, tags: [ 'config-tftpd'] }
+
+- name: copy local materals to utility server
+  hosts: utility
+  roles:
+    - { role: config-utility, tags: [ 'config-utility'] }
+
+- name: setup OpenShift internal registry server
+  hosts: registry
+  roles:
+    - { role: mirror-registry, tags: [ 'mirror-registry' ] }
+  environment: 
+    KUBECONFIG: /tmp/ocp-upi/root/install_dir/auth/kubeconfig
+    PATH: '{{ ansible_env.PATH }}:/tmp/ocp-upi/root/'
+
+- name: install openshift cluster
+  hosts: localhost
+  roles:
+    - { role: openshift-installer, tags: [ 'installer' ] }
+
+- name: start OCP VMs 
+  hosts: localhost
+  roles:
+    - { role: ocp-vm-cluster, tags: [ 'ocp-vm' ] }
+
+- name: post setting up to OCP cluster
+  hosts: utility
+  roles:
+    - { role: post-setup, tags: [ 'post-setup' ] }
+  environment:
+    KUBECONFIG: /tmp/ocp-upi/root/install_dir/auth/kubeconfig
+    PATH: '{{ ansible_env.PATH }}:/tmp/ocp-upi/root/'
+
+

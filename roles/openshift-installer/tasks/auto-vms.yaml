@@ -1,0 +1,32 @@
+- name: build a bootstrap node
+  tags: build-bootstrap
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-bootstrap \
+    --disk size=50 --ram {{ rhcos_bootstrap_node_memory }} --cpu host --vcpus {{ rhcos_bootstrap_node_cpu }} \
+    --os-type linux --os-variant rhel7 \
+    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
+    --location {{ ocp_work_dir }}/rhcos-install/ \
+    --extra-args "nomodeset rd.neednet=1 ip={{ ocp_ignition_url }}0::{{ ocp_ignition_url }}:255.255.255.0::{{ rhcos_interface_name }}:none nameserver={{ rhcos_nameserver }} coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/bootstrap.ign"
+
+- name: build a master nodes
+  tags: build-master
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-master-{{ item }} \
+    --disk size=50 --ram {{ rhcos_master_node_memory }} --cpu host --vcpus {{ rhcos_master_node_cpu }} \
+    --os-type linux --os-variant rhel7 \
+    --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
+    --location /tmp/ocp-upi/root/rhcos-install/ \
+    --extra-args "rd.neednet=1 ip=192.168.133.2{{ item }}::{{ ocp_ignition_url }}:255.255.255.0::{{ rhcos_interface_name }}:none nameserver={{ rhcos_nameserver }} nomodeset coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/master.ign"
+  with_sequence: count=3
+
+- name: build a worker nodes
+  tags: build-node
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-worker-{{ item }} \
+    --disk size=50 --ram {{ rhcos_worker_node_memory }} --cpu host --vcpus {{ rhcos_worker_node_cpu }} \
+    --os-type linux --os-variant rhel7 \
+    --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
+    --location /tmp/ocp-upi/root/rhcos-install/ \
+    --extra-args "rd.neednet=1 ip=192.168.133.3{{ item }}::{{ ocp_ignition_url }}:255.255.255.0::{{ rhcos_interface_name }}:none nameserver={{ rhcos_nameserver }} nomodeset coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/worker.ign"
+  with_sequence: count=2
+

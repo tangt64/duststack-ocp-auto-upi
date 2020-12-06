@@ -1,0 +1,31 @@
+ocp_work_dir: /tmp/root/
+ocp_version: 4.5.14
+ocp_architecture: x86_64
+ocp_base_domain: example.com
+ocp_cluster_name: ocp
+
+rhn_user: ''
+rhn_pass: ''
+rhn_rhel_image: rhel-server-7.8-update-3-x86_64-kvm.qcow2
+rhn_rhcos_url: 'https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos'
+rhn_rhcos_major: 4.5
+rhn_rhcos_minor: 4.5.6
+rhn_rhcos_image: rhcos-metal.x86_64.raw.gz
+rhn_rhcos_kernel: rhcos-installer-kernel-x86_64
+rhn_rhcos_initramfs: rhcos-installer-initramfs.x86_64.img
+rhn_rhel_image_able: no
+
+ocp_vir_net: ocp-133
+ocp_ignition_url: 192.168.133.2
+ocp_vir_netr: 192.168.133.
+
+ocp_public_keyfile: /root/.ssh/id_rsa.pub
+ocp_public_key: 
+
+web_port: 8080
+web_root: /var/www/w3
+
+localhost_ip: 127.0.0.1
+
+rhcos_image_able: yes
+client_installer_able: yes

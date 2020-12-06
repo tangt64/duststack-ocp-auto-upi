@@ -1,0 +1,7 @@
+---
+- import_tasks: generate_certificate.yaml
+  tags: build-certificate
+
+- import_tasks: mirror-images.yaml
+  tags: mirror-images
+

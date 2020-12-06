@@ -1,0 +1,27 @@
+$TTL 900
+@ IN SOA {{ hostname }}.{{ domain }}. {{ mailid }}.{{ domain }}. (
+	2019062002 1D 1H 1W 3H
+)
+
+							IN NS {{ hostname }}.{ domain }}.
+bastion				IN A 192.168.10.10
+bootstrap-0		IN A 192.168.10.11
+master-0			IN A 192.168.10.20
+master-1			IN A 192.168.10.21
+master-2			IN A 192.168.10.22
+infnod-0			IN A 192.168.10.30
+infnod-1			IN A 192.168.10.31
+cptnod-0			IN A 192.168.10.40
+cptnod-1			IN A 192.168.10.41
+cptnod-2			IN A 192.168.10.42
+api						IN A 192.168.10.254
+api-int				IN A 192.168.10.40
+apps					IN A 192.168.10.254
+*.apps				IN A 192.168.10.254
+etcd-0				IN A 192.168.10.10
+etcd-1				IN A 192.168.10.11
+etcd-2				IN A 192.168.10.12
+
+_etcd-server-ssl._tcp IN SRV 0 10 2380 etcd-0.{ domain }}.
+											IN SRV 0 10 2380 etcd-1.{{ domain }}.
+											IN SRV 0 10 2380 etcd-2.{{ domain }}.

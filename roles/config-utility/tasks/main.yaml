@@ -1,0 +1,20 @@
+- name: copy a materials to utility server
+  copy:
+    src: /tmp/ocp-upi.tar.bz2
+    dest: /tmp/
+
+- name: unarchive materials
+  unarchive:
+    src: /tmp/ocp-upi.tar.bz2
+    dest: /tmp/
+
+- name: install python3 package for httpd.py
+  package:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - python3
+
+- name: run httpd.py server
+  shell: nohup python3 {{ ocp_work_dir }}/httpd.py &
+

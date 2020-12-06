@@ -1,0 +1,33 @@
+- name: start ocp-bootstrap
+  virt:
+    name: ocp-bootstrap
+    state: running
+
+- name: wait for ocp-bootstrap VM about 10 mins
+  pause:
+    minutes: 20
+
+- name: start ocp-master nodes
+  virt:
+    name: "{{ item }}"
+    state: running
+  loop:
+    - ocp-master-1
+    - ocp-master-2
+    - ocp-master-3
+
+- name: wait for OCP Master VMs about 20 mins 
+  pause:
+    minutes: 30
+ 
+- name: start ocp-worker nodes
+  virt:
+    name: "{{ item }}"
+    state: running
+  loop:
+    - ocp-worker-1
+    - ocp-worker-2
+
+- name: wait for OCP worker node VMs about 20 mins 
+  pause:
+    minutes: 30

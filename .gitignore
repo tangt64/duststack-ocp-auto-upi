@@ -1,0 +1,11 @@
+*.qcow2.gz
+*.tar.gz
+*.raw.gz
+*.img
+*.iso
+*.qcow2
+*.log
+lab
+pull_secret
+*.swp
+*.ks

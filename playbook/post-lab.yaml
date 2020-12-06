@@ -1,0 +1,6 @@
+- name: post setting up to OCP cluster
+  hosts: localhost
+
+  roles:
+    - post-setup
+  environment: "{{ kubeconfig }}"

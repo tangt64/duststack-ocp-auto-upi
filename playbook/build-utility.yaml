@@ -1,0 +1,10 @@
+#- name: build and install VMs
+#  hosts: localhost
+#  roles:
+#    - libvirt-build-vms 
+
+- name: build a utility server
+  hosts: localhost
+  roles:
+    - build-utility
+

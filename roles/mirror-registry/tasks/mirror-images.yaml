@@ -1,0 +1,62 @@
+# tasks file for mirror-registry
+- name: install podman on utility server
+  package:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - podman
+    - httpd-tools
+    - epel-release
+    - jq
+
+- name: start io.podman service
+  systemd:
+    name: io.podman
+    state: started
+    enabled: yes
+
+- name: create folders for the registry
+  file:
+    path: "/opt/registry/{{ item }}"
+    state: directory
+    recurse: yes
+    owner: root
+    group: root
+  loop:
+    - auth
+    - certs
+    - data
+
+- name: generate a user name and a password 
+  command: htpasswd -bBc /opt/registry/auth/htpasswd {{ podman_username }} {{ podman_password }}
+
+- name: open the require ports for registry service
+  firewalld:
+    port: 5000/tcp
+    zone: "{{ item }}"
+    permanent: yes
+    state: enabled
+  loop:
+    - internal
+    - public
+ 
+- name: create the mirror registry container to utility server
+  block:
+   - template:
+       src: podman.sh.j2
+       dest: "{{ ocp_work_dir }}/podman.sh"
+       mode: 0744
+   - command: /bin/sh {{ ocp_work_dir }}/podman.sh
+
+- name: create the pull_secret as file
+  copy:
+    content: "{{ pull_sec }}"
+    dest: "{{ ocp_work_dir }}/ocp4_pull_secret_json"
+
+- name: convert to the pull secret by jq
+  shell: cat {{ ocp_work_dir }}/ocp4_pull_secret | jq .  > {{ ocp_work_dir }}/pull_secret.json
+
+- name: mirror the repository
+  shell: "{{ ocp_work_dir }}/oc adm -a {{ ocp_work_dir }}/pull_secret.json release mirror --from=quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}-{{ ocp_architecture }} --to={{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4 --to-release-image={{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4:{{ ocp_version }}-{{ ocp_architecture }}"
+
+

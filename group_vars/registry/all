@@ -1,0 +1,4 @@
+podman_username: admin
+podman_password: openshift
+registry_work_dir: /tmp/
+ocp_cluster_name: ocp

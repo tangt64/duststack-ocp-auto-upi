@@ -1,0 +1,25 @@
+---
+# tasks file for post-cleanup-vms
+
+- name: approve all the csr and wait a minutes the worker and infra nodes can be seen.
+  shell: "oc get csr -o name | xargs {{ ocp_work_dir }}/oc adm certificate approve"
+
+- pause:
+    minutes: 5
+    prompt: wait a approve all the crs about 5 mins
+
+- name: label to nodes as infra node for ingress service
+  shell: "oc label node {{ item }} node-role.kubernetes.io/infra=true"
+  loop:
+    - node1.ocp.example.com
+    - node2.ocp.example.com
+  ignore_errors: true
+
+- name: RWX storage no has the cluster
+  shell: oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+
+#- name: patch label for infra node selector
+#  shell: oc patch ingresscontroller default -n openshift-ingress-operator --type merge -p '{"spec":{"defaultCertificate":{"name":"custom-certs-default"}}}'
+
+
+

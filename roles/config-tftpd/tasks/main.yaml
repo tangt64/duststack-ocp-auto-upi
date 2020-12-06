@@ -1,0 +1,35 @@
+- name: install tftpd
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - tftp
+    - tftp-server
+    - syslinux-tftpboot
+
+- name: build tftpd service directory
+  file:
+    name: "{{ item }}"
+    state: directory
+  loop:
+    - /var/lib/tftpboot/rhcos
+    - /var/lib/tftpboot/pxelinux.cfg
+
+- name: copy a tftpd configuration file
+  copy:
+    src: ocp-tftpd.conf
+    dest: /var/lib/tftpboot/pxelinux.cfg/default
+
+- name: copy rhcos kernel and ramdisk image
+  copy:
+    src: "{{ ocp_work_dir }}/rhcos-install/{{ item }}"
+    dest: /var/lib/tftpboot/rhcos/{{ item }}
+  loop:
+    - initramfs.img
+    - vmlinuz
+
+- name: start and enable tftpd service
+  systemd:
+    name: tftp
+    state: started
+    enabled: yes

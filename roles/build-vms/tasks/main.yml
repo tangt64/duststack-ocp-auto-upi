@@ -1,0 +1,52 @@
+
+- name: build a haproxy
+  tags: build-haproxy
+  shell: qemu-img create -f qcow2 /var/lib/libvirt/images/{{ ocp_cluster_name }}-haproxy.qcow2 10G
+
+- name: build a bootstrap node
+  tags: build-bootstrap
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-bootstrap \
+    --disk size=50 --ram 16000 --cpu host --vcpus 4 \
+    --os-type linux --os-variant rhel7 \
+    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
+    --location /tmp/root/rhcos-install/ \
+    --extra-args "nomodeset rd.neednet=1 ip={{ ocp_ignition_url }}0::{{ ocp_ignition_url }}:255.255.255.0::ens3:none nameserver=192.168.133.2 coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/bootstrap.ign"
+
+- name: build a master nodes
+  tags: build-master
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-master-{{ item }} \
+    --disk size=50 --ram 16000 --cpu host --vcpus 4 \
+    --os-type linux --os-variant rhel7 \
+    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
+    --location /tmp/root/rhcos-install/ \
+    --extra-args "rd.neednet=1 ip=192.168.133.2{{ item }}::{{ ocp_ignition_url }}:255.255.255.0::ens3:none nameserver=192.168.133.2 nomodeset coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/master.ign"
+  with_sequence: count=3
+
+- name: build a worker nodes
+  tags: build-node
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-worker-{{ item }} \
+    --disk size=50 --ram 8192 --cpu host --vcpus 4 \
+    --os-type linux --os-variant rhel7 \
+    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
+    --location /tmp/root/rhcos-install/ \
+    --extra-args "rd.neednet=1 ip=192.168.133.3{{ item }}::{{ ocp_ignition_url }}:255.255.255.0::ens3:none nameserver=192.168.133.2 nomodeset coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/worker.ign"
+  with_sequence: count=2
+
+- name: build a haproxy node
+  tags: build-haproxy
+  shell: qemu-img create -f qcow2 /var/lib/libvirt/images/{{ ocp_cluster_name }}-lb.qcow2 10G
+
+- name: create a haproxy node
+  tags: build-haproxy
+  shell: virt-install --name {{ ocp_cluster_name }}-lb -r 4096 --vcpus 2 -l http://mirror.kakao.com/centos/7/os/x86_64/ --network network={{ ocp_vir_net }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-lb.qcow2,format=qcow2 --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/haproxy.ks"
+
+- name: wait for build a VMs
+  pause: 
+    minutes: 10
+
+- name: customized the haproxy node
+  tags: build-haproxy
+  shell: virt-customize -m 2048 -a /var/lib/libvirt/images/{{ ocp_cluster_name }}-lb.qcow2 --uninstall cloud-init --ssh-inject root:string:'{{ ocp_public_keyfile }}' --selinux-relabel
