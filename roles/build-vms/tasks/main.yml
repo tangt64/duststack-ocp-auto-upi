@@ -50,3 +50,9 @@
 - name: customized the haproxy node
   tags: build-haproxy
   shell: virt-customize -m 2048 -a /var/lib/libvirt/images/{{ ocp_cluster_name }}-lb.qcow2 --uninstall cloud-init --ssh-inject root:string:'{{ ocp_public_keyfile }}' --selinux-relabel
+
+- name: archive materials
+  archive:
+    path: /tmp/ocp-upi
+    dest: /tmp/ocp-upi.tar.bz2
+
