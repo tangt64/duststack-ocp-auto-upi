@@ -1,0 +1,27 @@
+$TTL 900
+@ IN SOA {{ dns_hostname }}.{{ ocp_base_domain }}. root.{{ ocp_base_domain }}. (
+	2019062002 1D 1H 1W 3H
+)
+
+							IN NS {{ dns_hostname }}.{ ocp_base_domain }}.
+
+9.133.168.192.in-addr.arpa.  IN PTR bastion
+20.133.168.192.in-addr.arpa  IN PTR bootstrap
+21.133.168.192.in-addr.arpa  IN PTR master0
+22.133.168.192.in-addr.arpa  IN PTR master1
+23.133.168.192.in-addr.arpa  IN PTR master2
+
+
+31.133.168.192.in-addr.arpa  IN PTR node0
+32.133.168.192.in-addr.arpa  IN PTR node1
+
+41.133.168.192.in-addr.arpa  IN PTR infra0
+42.133.168.192.in-addr.arpa  IN PTR infra1
+
+254.133.168.192.in-addr.arpa  IN PTR api
+254.133.168.192.in-addr.arpa  IN PTR api-int
+
+
+21.133.168.192.in-addr.arpa  IN PTR etcd0
+22.133.168.192.in-addr.arpa  IN PTR etcd1
+23.133.168.192.in-addr.arpa  IN PTR etcd2

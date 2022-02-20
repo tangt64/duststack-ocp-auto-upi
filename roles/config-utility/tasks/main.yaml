@@ -1,20 +1,30 @@
-- name: copy a materials to utility server
-  copy:
-    src: /tmp/ocp-upi.tar.bz2
-    dest: /tmp/
+- name: install python3, tftp, dhcp package
+  yum:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - python3
+    - tftp-server
+    - tftp
+    - dhcp-server
+    - dhcp-common
+    - zip
+    - tar
 
 - name: unarchive materials
   unarchive:
     src: /tmp/ocp-upi.tar.bz2
     dest: /tmp/
-
-- name: install python3 package for httpd.py
-  package:
-    name: "{{ item }}"
-    state: latest
-  loop:
-    - python3
+  run_once: true
 
 - name: run httpd.py server
   shell: nohup python3 {{ ocp_work_dir }}/httpd.py &
 
+- name: enable to tftpd and dhcpd service
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - tftp
+    - dhcpd

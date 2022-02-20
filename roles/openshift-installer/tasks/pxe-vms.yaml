@@ -1,53 +1,65 @@
 - name: build a bootstrap node
   tags: build-bootstrap
-  shell: |
+  shell: 
     virt-install --name {{ ocp_cluster_name }}-bootstrap \
-    --disk size=50 --ram {{ rhcos_bootstrap_node_memory }} --cpu host --vcpus {{ rhcos_bootstrap_node_cpu }} \
-    --os-type linux --os-variant rhel7 \
-    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
+    --disk size={{ libvirt_disk_size[:2] }} --ram {{ rhcos_bootstrap_node_memory }} --cpu host --vcpus {{ rhcos_bootstrap_node_cpu }} \
+    --os-type linux --os-variant rhel7.0 \
+    --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --noreboot --noautoconsole \
     --pxe --mac=52:54:00:7d:2d:b1
 
-- name: build a master1
+- name: build a masters
   tags: build-master
-  shell: |
-    virt-install --name {{ ocp_cluster_name }}-master-1 \
-    --disk size=50 --ram {{ rhcos_master_node_memory }} --cpu host --vcpus {{ rhcos_master_node_cpu }} \
-    --os-type linux --os-variant rhel7 \
-    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
-    --pxe --mac=52:54:00:7d:2d:b2
+  shell: 
+    'virt-install --name "{{ ocp_cluster_name }}-master-{{ idx }}" \
+    --disk size="{{ libvirt_disk_size[:2] }}" --ram "{{ rhcos_master_node_memory }}" --cpu host --vcpus "{{ rhcos_master_node_cpu }}" \
+    --os-type linux --os-variant rhel7.0 \
+    --network network="{{ ocp_vir_net }}" --network network="{{ ocp_vir_net_internal }}" --noreboot --noautoconsole \
+    --pxe --mac="{{ item }}"'
+  loop:
+    - 52:54:00:7d:2d:b2
+    - 52:54:00:7d:2d:b3
+    - 52:54:00:7d:2d:b4
+  loop_control:
+    index_var: idx
 
-- name: build a master2
-  tags: build-master
-  shell: |
-    virt-install --name {{ ocp_cluster_name }}-master-2 \
-    --disk size=50 --ram {{ rhcos_master_node_memory }} --cpu host --vcpus {{ rhcos_master_node_cpu }} \
-    --os-type linux --os-variant rhel7 \
-    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
-    --pxe --mac=52:54:00:7d:2d:b3
-
-- name: build a master3
-  tags: build-master
-  shell: |
-    virt-install --name {{ ocp_cluster_name }}-master-3 \
-    --disk size=50 --ram {{ rhcos_master_node_memory }} --cpu host --vcpus {{ rhcos_master_node_cpu }} \
-    --os-type linux --os-variant rhel7 \
-    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
-    --pxe --mac=52:54:00:7d:2d:b4
-
-- name: build a worker node1
+- name: build a worker nodes
   tags: build-node
-  shell: |
-    virt-install --name {{ ocp_cluster_name }}-worker-1 \
-    --disk size=50 --ram {{ rhcos_worker_node_memory }} --cpu host --vcpus {{ rhcos_worker_node_cpu }} \
-    --os-type linux --os-variant rhel7 \
-    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
-    --pxe --mac=52:54:00:7d:2d:b5
+  shell: 
+    'virt-install --name "{{ ocp_cluster_name }}-node-{{ idx }}" \
+     --disk size="{{ libvirt_disk_size[:2] }}" --ram "{{ rhcos_worker_node_memory }}" --cpu host --vcpus "{{ rhcos_worker_node_cpu }}" \
+    --os-type linux --os-variant rhel7.0 \
+    --network network="{{ ocp_vir_net }}" --network network="{{ ocp_vir_net_internal }}" --noreboot --noautoconsole \
+    --pxe --mac="{{ item }}"'
+  loop:
+    - 52:54:00:7d:2d:b5
+    - 52:54:00:7d:2d:b6
+  loop_control:
+    index_var: idx
 
-- name: build a worker node2
-  tags: build-node
-  shell: |
-    virt-install --name {{ ocp_cluster_name }}-worker-2 \
-    --disk size=50 --ram {{ rhcos_worker_node_memory }} --cpu host --vcpus {{ rhcos_worker_node_cpu }} \
-    --os-type linux --os-variant rhel7 \
-    --network network={{ ocp_vir_net }} --noreboot --noautoconsole \
-    --pxe --mac=52:54:00:7d:2d:b6
+- name: build a worker as infra nodes
+  tags: build-infra
+  shell: 
+    'virt-install --name "{{ ocp_cluster_name }}-infra-{{ idx }}" \
+     --disk size="{{ libvirt_disk_size[:2] }}" --ram "{{ rhcos_worker_node_memory }}" --cpu host --vcpus "{{ rhcos_worker_node_cpu }}" \
+    --os-type linux --os-variant rhel7.0 \
+    --network network="{{ ocp_vir_net }}" --network network="{{ ocp_vir_net_internal }}" --noreboot --noautoconsole \                                                                 
+    --pxe --mac="{{ item }}"'
+  loop:
+    - 52:54:00:7d:2d:b7
+    - 52:54:00:7d:2d:b8
+  loop_control:
+    index_var: idx
+
+- name: build a worker as router nodes
+  tags: build-router
+  shell: 
+    'virt-install --name "{{ ocp_cluster_name }}-router-{{ idx }}" \
+     --disk size="{{ libvirt_disk_size[:2] }}" --ram "{{ rhcos_worker_node_memory }}" --cpu host --vcpus "{{ rhcos_worker_node_cpu }}" \
+    --os-type linux --os-variant rhel7.0 \
+    --network network="{{ ocp_vir_net }}" --network network="{{ ocp_vir_net_internal }}" --noreboot --noautoconsole \                                                                 
+    --pxe --mac="{{ item }}"'
+  loop:
+    - 52:54:00:7d:2d:b9
+    - 52:54:00:7d:2d:b0
+  loop_control:
+    index_var: idx

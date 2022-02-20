@@ -1,0 +1,12 @@
+---
+- name: copy kubeconfig files on the '{{ inventory_hostname }}'
+  copy:
+    src: '{{ ocp_work_dir }}/install_dir/auth/kubeconfig'
+    dest: '{{ ansible_env.HOME }}/.kube/config'
+    remote_src: true
+
+- name: copy oc tools on the '{{ inventory_hostname }}'
+  copy:
+    src: '{{ ocp_work_dir }}/oc'
+    dest: /usr/local/bin/oc
+    mode: 0744

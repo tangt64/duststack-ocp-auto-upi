@@ -1,10 +1,42 @@
-- name: install python SSL package
-  package:
-    name: "{{ item }}"
-    state: latest
-  loop:
-    - python2-cryptography
-    - pyOpenSSL
+# tasks file for mirror-registry
+- block:
+  - name: install podman on utility server for RHEL and CentOS 7
+    package:
+      name: "{{ item }}"
+      state: latest
+    loop:
+      - podman
+      - httpd-tools
+      - pyOpenSSL
+      - epel-release
+      - jq
+      - python2-cryptography
+
+  - name: start io.podman service for RHEL 7
+    systemd:
+      name: io.podman
+      state: started
+      enabled: yes
+  when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7")
+
+- block:
+  - name: install podman on utility server for RHEL and CentOS 8
+    package:
+      name: "{{ item }}"
+      state: latest
+    loop:
+      - podman
+      - httpd-tools
+      - epel-release
+      - jq
+      - python3-cryptography
+
+  - name: start podman service for RHEL 8
+    systemd:
+      name: podman
+      state: started
+      enabled: yes
+  when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "8")
 
 - name: create folders for the registry
   file:
@@ -20,14 +52,14 @@
 
 - name: generate private key
   openssl_privatekey:
-    path: /opt/registry/certs/ocp.example.com.key
+    path: "/opt/registry/certs/{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}.key"
 
 - name: generate certifcate signing request
   openssl_csr:
-    path: /opt/registry/certs/ocp.example.com.csr
-    privatekey_path: /opt/registry/certs/ocp.example.com.key
-    common_name: ocp.example.com
-    subject_alt_name: DNS:ocp.example.com
+    path: "/opt/registry/certs/{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}.csr"
+    privatekey_path: "/opt/registry/certs/{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}.key"
+    common_name: "{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}"
+    subject_alt_name: "DNS:{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}"
     basic_constraints:
       - CA:TRUE
     basic_constraints_critical: True
@@ -36,15 +68,15 @@
 - name: generate self-signed certificate for common name
   openssl_certificate:
     provider: selfsigned
-    path: /opt/registry/certs/ocp.example.com.crt
-    privatekey_path: /opt/registry/certs/ocp.example.com.key
-    csr_path: /opt/registry/certs/ocp.example.com.csr
+    path: "/opt/registry/certs/{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}.crt"
+    privatekey_path: "/opt/registry/certs/{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}.key"
+    csr_path: "/opt/registry/certs/{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}.csr"
     backup: true
 
 - name: self-signed certificate to the anchors directory
   copy: 
-    src: /opt/registry/certs/ocp.example.com.crt
-    dest: /etc/pki/ca-trust/source/anchors/example.com.crt
+    src: "/opt/registry/certs/{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}.crt"
+    dest: "/etc/pki/ca-trust/source/anchors/{{ ocp_cluster_name }}.{{ ocp_base_domain }}.crt"
     remote_src: true
   register: new_certificate
   

@@ -1,5 +1,4 @@
 - name: config utility server
   hosts: utility
   roles:
-    - openshift-installer
     - config-utility

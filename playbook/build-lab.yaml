@@ -6,40 +6,59 @@
 - name: configure dhcp server
   hosts: utility
   roles:
-    - { role: config-dhcpd, tags: [ 'config-dhcpd'] }
+    - { role: config-dhcpd, tags: [ 'config-dhcpd', 'stage2'] }
+
+- name: config bind server
+  hosts: utility
+  roles:
+    - { role: config-dns, tags: [ 'config-dns', 'stage2' ] }
+- name: configure haproxy server
+  hosts: haproxy
+  roles:
+    - { role: config-haproxy, tags: [ 'config-haproxy', 'stage2'] }
 
 - name: configure tftp server
   hosts: utility
   roles:
-    - { role: config-tftpd, tags: [ 'config-tftpd'] }
+    - { role: config-tftpd, tags: [ 'config-tftpd','stage2'] }
 
 - name: copy local materals to utility server
   hosts: utility
   roles:
-    - { role: config-utility, tags: [ 'config-utility'] }
+    - { role: config-utility, tags: [ 'config-utility','stage2'] }
 
 - name: setup OpenShift internal registry server
   hosts: registry
   roles:
-    - { role: mirror-registry, tags: [ 'mirror-registry' ] }
+    - { role: mirror-registry, tags: [ 'config-registry','stage2' ] }
   environment: 
-    KUBECONFIG: /tmp/ocp-upi/root/install_dir/auth/kubeconfig
+    KUBECONFIG: '{{ ocp_work_dir }}/install_dir/auth/kubeconfig'
     PATH: '{{ ansible_env.PATH }}:/tmp/ocp-upi/root/'
 
 - name: install openshift cluster
   hosts: localhost
   roles:
-    - { role: openshift-installer, tags: [ 'installer' ] }
+    - { role: openshift-installer, tags: [ 'ocp-vm','stage3' ] }
 
 - name: start OCP VMs 
   hosts: localhost
   roles:
-    - { role: ocp-vm-cluster, tags: [ 'ocp-vm' ] }
+    - { role: ocp-vm-cluster, tags: [ 'ocp-vm','stage3' ] }
+
+- name: infra labeling, CSR Approve for post installation
+  hosts: utility
+  roles:
+    - { role: ocp-oc-client, tags: [ 'ocp-client', 'stage4' ] }
+    - { role: ocp-csr-approve, tags: [ 'csr-approve', 'stage4' ] }
+    - { role: ocp-infra-node-patch, tags: [ 'lable-infra', 'stage4' ] }
+  environment: 
+    KUBECONFIG: '{{ ansible_env.HOME  }}/.kube/config'
+    PATH: '{{ ansible_env.PATH }}:/usr/local/bin'
 
 - name: post setting up to OCP cluster
   hosts: utility
   roles:
-    - { role: post-setup, tags: [ 'post-setup' ] }
+    - { role: post-setup, tags: [ 'post-setup','stage4' ] }
   environment:
     KUBECONFIG: /tmp/ocp-upi/root/install_dir/auth/kubeconfig
     PATH: '{{ ansible_env.PATH }}:/tmp/ocp-upi/root/'

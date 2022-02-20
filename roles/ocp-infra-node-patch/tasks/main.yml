@@ -1,0 +1,29 @@
+---
+- name: label to nodes as infra node 
+  shell: "oc label node {{ item }} node-role.kubernetes.io/infra=true --overwrite"
+  loop:
+    - 'infra0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
+    - 'infra1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
+
+- name: label to nodes as router node 
+  shell: "oc label node {{ item }} node-role.kubernetes.io/router=true --overwrite"
+  loop:
+    - 'router0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
+    - 'router1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
+
+- name: de-label infra node as normal node
+  shell: "oc label node {{ item }} node-role.kubernetes.io/worker-"
+  loop:
+    - 'infra0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
+    - 'infra1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
+    - 'router0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
+    - 'router1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
+
+- name: RWX storage no has the cluster
+  shell: oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+
+#- name: patch label for infra node selector
+#  shell: oc patch ingresscontroller default -n openshift-ingress-operator --type merge -p '{"spec":{"defaultCertificate":{"name":"custom-certs-default"}}}'
+
+
+

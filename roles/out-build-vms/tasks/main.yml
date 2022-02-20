@@ -1,0 +1,55 @@
+- name: build a haproxy and utility virtual disk
+  tags: build-haproxy
+  shell: qemu-img create -f qcow2 /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 {{ libvirt_disk_size[:2] }}
+  loop:
+    - haproxy
+    - utility
+
+- name: build a bootstrap node
+  tags: build-bootstrap
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-bootstrap \
+  --disk size={{ libvirt_disk_size[:2] }} --ram {{ utility_nodes_memory }} --cpu host --vcpus {{ utility_nodes_cpu }} \
+    --os-type linux --os-variant {{ ocp_rhel_os_variant }} --pxe \
+    --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --noreboot --noautoconsole \
+    --location /tmp/root/rhcos-install/ \
+    --extra-args "nomodeset rd.neednet=1 ip={{ ocp_ignition_url }}0::{{ ocp_ignition_url }}:255.255.255.0::ens3:none nameserver=192.168.133.2 coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/bootstrap.ign"
+
+- name: build a master nodes
+  tags: build-master
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-master-{{ item }} \
+    --disk size={{ libvirt_disk_size[:2] }} --ram {[ rhcos_master_node_memory }} --cpu host --vcpus {{ rhcos_master_node_cpu }} \
+    --os-type linux --os-variant {{ ocp_rhel_os_variant }} --pxe \
+    --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --noreboot --noautoconsole \
+    --location /tmp/root/rhcos-install/ \
+    --extra-args "rd.neednet=1 ip=192.168.133.2{{ item }}::{{ ocp_ignition_url }}:255.255.255.0::ens3:none nameserver=192.168.133.2 nomodeset coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/master.ign"
+  with_sequence: count=3
+
+- name: build a worker nodes
+  tags: build-node
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-worker-{{ item }} \
+    --disk size={{ libvirt_disk_size }} --ram {{ worker_node_memory }} --cpu host --vcpus {{ worker_node_cpu }} \
+    --os-type linux --os-variant {{ ocp_rhel_os_variant }} --pxe \
+    --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --noreboot --noautoconsole \
+    --location /tmp/root/rhcos-install/ \
+    --extra-args "rd.neednet=1 ip=192.168.133.3{{ item }}::{{ ocp_ignition_url }}:255.255.255.0::ens3:none nameserver=192.168.133.2 nomodeset coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/worker.ign"
+  with_sequence: count=2
+
+- name: build a infrastructure nodes
+  tags: build-infra
+  shell: |
+    virt-install --name {{ ocp_cluster_name }}-infra-{{ item }} \
+    --disk size={{ libvirt_disk_size}[:2] }} --ram {{ infra_node_memory }} --cpu host --vcpus {{ infra_node_cpu }} \
+    --os-type linux --os-variant {{ ocp_rhel_os_variant }} --pxe \
+    --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --noreboot --noautoconsole \
+    --location /tmp/root/rhcos-install/ \
+    --extra-args "rd.neednet=1 ip=192.168.133.4{{ item }}::{{ ocp_ignition_url }}:255.255.255.0::ens3:none nameserver=192.168.133.2 nomodeset coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.image_url=http://{{ ocp_ignition_url }}:{{ web_port }}/{{ rhn_rhcos_image }} coreos.inst.ignition_url=http://{{ ocp_ignition_url }}:{{ web_port }}/install_dir/worker.ign"
+  with_sequence: count=2
+
+- name: archive materials
+  archive:
+    path: /tmp/ocp-upi
+    dest: /tmp/ocp-upi.tar.bz2
+

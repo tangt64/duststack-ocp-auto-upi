@@ -1,0 +1,11 @@
+[vms]
+localhost
+
+[utility]
+192.168.133.2
+
+[registry]
+192.168.133.2
+
+[haproxy]
+192.168.133.250

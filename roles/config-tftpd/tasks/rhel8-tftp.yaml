@@ -1,0 +1,49 @@
+- name: install tftpd
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - tftp
+    - tftp-server
+    - syslinux-tftpboot
+
+- name: build tftpd service directory
+  file:
+    name: "{{ item }}"
+    state: directory
+  loop:
+    - /tftpboot/rhcos
+    - /tftpboot/pxelinux.cfg
+
+
+- name: copy a tftpd configuration file
+  template:
+    src: "{{ item }}"
+    dest: /tftpboot/pxelinux.cfg/default
+  loop:
+    - ocp-tftpd.conf
+
+- name: copy the tftp materials for clients
+  copy:  
+    src: "{{ item }}"
+    dest: /var/lib/tftpboot/
+    remote_src: true
+  loop:
+    - /tftpboot/ldlinux.c32
+    - /tftpboot/libutil.c32
+    - /tftpboot/menu.c32
+    - /tftpboot/pxelinux.0
+
+- name: copy rhcos kernel and ramdisk image
+  copy:
+    src: "{{ ocp_work_dir }}/rhcos-install/{{ item }}"
+    dest: /tftpboot/rhcos/{{ item }}
+  loop:
+    - initramfs.img
+    - vmlinuz
+
+- name: start and enable tftpd service
+  systemd:
+    name: tftp
+    state: restarted
+    enabled: yes

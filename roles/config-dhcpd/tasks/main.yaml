@@ -4,11 +4,11 @@
     state: present
   loop:
     - dhcp-common
-    - dhcp
+    - dhcp-server
 
 - name: copy dhcpd.conf file 
-  copy:
-    src: ocp-dhcpd.conf
+  template:
+    src: ocp-dhcpd.conf.j2
     dest: /etc/dhcp/dhcpd.conf
 
 - name: start and enable to the dhcpd service

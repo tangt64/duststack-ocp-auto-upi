@@ -1,0 +1,25 @@
+$TTL 900
+@ IN SOA {{ dns_hostname }}.{{ ocp_base_domain }}. root.{{ ocp_base_domain }}. (
+	2019062002 1D 1H 1W 3H
+)
+
+							IN NS {{ dns_hostname }}.{ ocp_base_domain }}.
+bastion				IN A 192.168.133.9
+bootstrap	  	IN A 192.168.133.20
+master0			  IN A 192.168.133.21
+master1			  IN A 192.168.133.22
+master2		  	IN A 192.168.133.23
+
+api						IN A 192.168.133.254
+api-int				IN A 192.168.133.254
+*.apps				IN A 192.168.133.254
+
+node0				  IN A 192.168.133.31
+node1					IN A 192.168.133.32
+
+infra0	  		IN A 192.168.133.41
+infra1			 IN A 192.168.133.42
+
+etcd0				IN A 192.168.133.21
+etcd1				IN A 192.168.133.22
+etcd2				IN A 192.168.133.23

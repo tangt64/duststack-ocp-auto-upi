@@ -7,9 +7,9 @@ compute:
 controlPlane:
   hyperthreading: Disabled
   name: master
-  replicas: 3
+  replicas: {{ ocp_master_node_set }}
 metadata:
-  name: '{{ ocp_cluster_name }}'
+  name: {{ ocp_cluster_name }}
 networking:
   clusterNetworks:
   - cidr: 10.128.0.0/14
@@ -20,11 +20,11 @@ networking:
 platform:
   none: {}
 pullSecret: '{{ pull_sec }}'
-sshKey: '{{ ocp_public_key.content | b64decode }}'
+sshKey: {{ ocp_public_key.content | b64decode }}
 imageContentSources:
 - mirrors:
-  - ocp.example.com:5000/ocp4/openshift4
+  - {{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
-  - ocp.example.com:5000/ocp4/openshift4
+  - {{ registry_hostname }}.{{ ocp_cluster_name}}.{{ ocp_base_domain }}:5000/ocp4/openshift4
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev

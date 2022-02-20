@@ -1,0 +1,69 @@
+global
+  log 127.0.0.1 local2
+  chroot /var/lib/haproxy
+  pidfile /var/run/haproxy.pid
+  maxconn 4000
+  user haproxy
+  group haproxy
+  daemon
+  stats socket /var/lib/haproxy/stats
+
+defaults
+  mode tcp
+  log global
+  option tcplog
+  option dontlognull
+  option redispatch
+  retries 3
+  timeout queue 1m
+  timeout connect 10s
+  timeout client 1m
+  timeout server 1m
+  timeout check 10s
+  maxconn 3000
+# 6443 points to control plan
+frontend ocp-api 
+  bind *:6443
+  default_backend master-api
+backend master-api
+  balance source
+  server bootstrap bootstrap.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:6443 check
+  server master0 master0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:6443 check
+  server master1 master1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:6443 check
+  server master2 master2.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:6443 check
+
+# 22623 points to control plane
+frontend ocp-mapi 
+  bind *:22623
+  default_backend master-mapi
+backend master-mapi
+  balance source
+  server bootstrap bootstrap.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:22623 check
+  server master0 master0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:22623 check
+  server master1 master1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:22623 check
+  server master2 master2.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:22623 check
+
+# 80 points to worker nodes
+frontend ocp-http 
+  bind *:80
+  default_backend ingress-http
+backend ingress-http
+  balance source
+  server node0 node0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:80 check
+  server node1 node1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:80 check
+  server infra0 infra0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+  server infra1 infra1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+  server router0 router0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+  server rotuer1 router1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+# 443 points to worker nodes
+frontend ocp-https 
+  bind *:443
+  default_backend infra-https
+backend infra-https
+  balance source
+  server node0 node0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+  server node1 node1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+  server infra0 infra0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+  server infra1 infra1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+  server router0 router0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check
+  server router1 router1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:443 check

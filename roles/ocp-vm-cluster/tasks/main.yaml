@@ -12,9 +12,9 @@
     name: "{{ item }}"
     state: running
   loop:
+    - ocp-master-0
     - ocp-master-1
     - ocp-master-2
-    - ocp-master-3
 
 - name: wait for OCP Master VMs about 20 mins 
   pause:
@@ -25,8 +25,12 @@
     name: "{{ item }}"
     state: running
   loop:
+    - ocp-worker-0
     - ocp-worker-1
-    - ocp-worker-2
+    - ocp-infra-0
+    - ocp-infra-1
+    - ocp-router-0
+    - ocp-router-1
 
 - name: wait for OCP worker node VMs about 20 mins 
   pause:

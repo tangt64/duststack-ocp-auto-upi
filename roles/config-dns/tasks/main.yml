@@ -1,0 +1,34 @@
+- name: install bind package
+  yum:
+    name: bind
+    state: latest
+
+- name: generate to bind zone files
+  template:
+    src: ocp-domain.zone
+    dest: /var/named/{{ ocp_cluster_name }}.{{ ocp_base_domain }}.zone
+    owner: root
+    group: named
+
+- name: generate to bind rev file
+  template:
+    src: ocp-domain.zone.rev
+    dest: /var/named/{{ ocp_cluster_name }}.{{ ocp_base_domain }}.rev.zone  
+    owner: root
+    group: named
+
+- name: generate to bind configure file 
+  template:
+    src: "{{ item }}"
+    dest: /etc/
+    owner: root
+    group: named
+  loop:
+    - named.conf
+    - named.rfc1912.zones
+
+- name: restart named service
+  systemd:
+    name: named
+    state: restarted
+    enabled: yes

@@ -12,7 +12,7 @@ max-lease-time 14400;
 	option broadcast-address        192.168.133.255;
 	option subnet-mask              255.255.255.0;
 	option domain-name-servers      192.168.133.1;
-	option domain-name              "example.com";
+	option domain-name              "{{ ocp_cluster_name }}.{{ ocp_base_domain }}";
 
 	subnet 192.168.133.0 netmask 255.255.255.0 {
      	pool {
@@ -26,6 +26,8 @@ max-lease-time 14400;
 		host node1 { hardware ethernet 52:54:00:7d:2d:b6; fixed-address 192.168.133.32; }
 		host infra0 { hardware ethernet 52:54:00:7d:2d:b7; fixed-address 192.168.133.41; }
 		host infra1 { hardware ethernet 52:54:00:7d:2d:b8; fixed-address 192.168.133.42; }
+		host router0 { hardware ethernet 52:54:00:7d:2d:b9; fixed-address 192.168.133.51; }
+		host router1 { hardware ethernet 52:54:00:7d:2d:b0; fixed-address 192.168.133.52; }
 
 		# this will not give out addresses to hosts not listed above
 		deny unknown-clients;

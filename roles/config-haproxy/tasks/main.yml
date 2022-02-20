@@ -1,0 +1,31 @@
+- name: install haproxy package
+  yum:
+    name: haproxy
+    state: latest
+
+- name: add haproxy service ports to Firewalld
+  firewalld:
+    permanent: yes
+    port: "{{ item }}"
+    state: enabled
+  loop:
+    - 6443/tcp
+    - 22623/tcp
+    - 80/tcp
+    - 443/tcp
+
+- name: disable selinux for haproxy
+  selinux:
+    state: permissive  
+    policy: targeted
+
+- name: generate to the haproxy.cfg file
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+
+- name: restart haproxy service
+  systemd:
+    name: haproxy
+    state: restarted
+    enabled: yes

@@ -1,24 +1,33 @@
 ---
 # tasks file for libvirt-build-vms
+- name: check to the libvirt network list
+  shell: virsh net-list
+  register: check_virt_nets
+
+- name: check to the nested mode is enabled
+  shell: cat /etc/modprobe.d/kvm.conf
+  register: check_kvm
+  
 - name: enable to nested function to kvm module
   lineinfile:
     path: /etc/modprobe.d/kvm.conf
     line: options kvm_intel nested=Y
     create: yes
-  when: libvirtd_nested
+  when: libvirtd_nested and "kvm_intel nested=Y" not in check_kvm.stdout
 
-- name: reloaded KVM module
-  block:
-    - name: remove KVM module
-      command: modprobe -r kvm_intel
-    - name: load KVM module
-      command: modprobe kvm_intel
+- block:
+  - name: remove KVM module
+    command: modprobe -r kvm_intel
+  - name: load KVM module
+    command: modprobe kvm_intel
+  when: check_kvm.stdout.find('kvm_intel nested=Y') != -1
 
 - name: add 8080/tcp to firewalld
   firewalld:
     port: 8080/tcp
     permanent: true
     state: enabled
+    zone: libvirt
 
 - name: install Virtulization packages
   package:
@@ -69,58 +78,56 @@
     kernel = vmlinuz
     EOF
 
-- block:
-  - name: RHCOS metal image download
-    copy:
-      src: "{{ ansible_env.HOME }}/duststack-ocp-auto-upi/files/images/{{ item }}"
-      dest: "{{ ocp_work_dir }}"
-    loop:
-      - rhcos-installer-kernel-x86_64
-      - rhcos-installer-initramfs.x86_64.img
-      - rhcos-metal.x86_64.raw.gz
-  rescue:
-  - name: RHCOS metal image download
-    get_url:
-      url: "{{ rhn_rhcos_url }}/{{ rhn_rhcos_major }}/{{ rhn_rhcos_minor }}/{{ rhn_rhcos_image }}"
-      dest: "{{ ocp_work_dir }}"
+- name: RHCOS metal image download from local
+  copy:
+    src: "files/images/{{ item }}"
+    dest: "{{ ocp_work_dir }}"
+  loop:
+    - "{{ rhn_rhcos_image }}"
+    - "{{ rhn_rhcos_kernel }}"
+    - "{{ rhn_rhcos_initramfs }}"
+  when: rhcos_image_installer_location == "local"
 
-  - name: RHCOS installer kernel donwload
-    get_url:
-      url: "{{ rhn_rhcos_url }}/{{ rhn_rhcos_major }}/{{ rhn_rhcos_minor }}/{{ rhn_rhcos_kernel }}"
-      dest: "{{ ocp_work_dir }}/rhcos-install/vmlinuz"
+- name: RHCOS metal image download from remote
+  get_url:
+    url: "{{ rhn_rhcos_url }}/{{ rhn_rhcos_major }}/{{ rhn_rhcos_minor }}/{{ item }}"
+    dest: "{{ ocp_work_dir }}"
+  loop:
+    - "{{ rhn_rhcos_image }}"
+    - "{{ rhn_rhcos_kernel }}"
+    - "{{ rhn_rhcos_initramfs }}"
+  when: rhcos_image_installer_location == "remote"
 
-  - name: RHCOS installer initramfs donwload
-    get_url:
-      url: "{{ rhn_rhcos_url }}/{{ rhn_rhcos_major }}/{{ rhn_rhcos_minor }}/{{ rhn_rhcos_initramfs }}"
-      dest: "{{ ocp_work_dir }}/rhcos-install/initramfs.img"
+- name: download openshift v4 client and installer files from local
+  tags: build-rhcos
+  copy:
+    src: "files/common/{{ item }}"
+    dest: "{{ ocp_work_dir }}"
+  loop:
+    - openshift-client-linux.tar.gz
+    - openshift-install-linux.tar.gz
+  when: rhcos_image_installer_location == "local"
 
-- block:
-  - name: download openshift v4 client and installer from fils from local
-    tags: build-rhcos
-    copy:
-      src: "{{ ansible_env.HOME }}/duststack-ocp-auto-upi/files/common/{{ item }}"
-      dest: "{{ ocp_work_dir }}"
-    with_items:
-      - openshift-client-linux.tar.gz
-      - openshift-install-linux.tar.gz
-  rescue:
-  - name: download openshift v4 client and installer from online
-    tags: build-rhcos
-    get_url:
-      url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ item }}
-      dest: "{{ ocp_work_dir }}"
-    with_items:
-      - "{{ ocp_version }}/openshift-client-linux.tar.gz"
-      - "{{ ocp_version }}/openshift-install-linux.tar.gz"
-  always:
-  - name: copy 
-    copy:
-      src: "{{ ocp_work_dir }}{{ item.srcimg }}"
-      dest: "{{ ocp_work_dir }}/rhcos-install/{{ item.destimg }}"
-    loop:
-      - { srcimg: 'rhcos-installer-kernel-x86_64', destimg: 'vmlinuz' }
-      - { srcimg: 'rhcos-installer-initramfs.x86_64.img', destimg: 'initramfs.img'}
-      - { srcimg: 'rhcos-metal.x86_64.raw.gz', destimg: 'rhcos-metal.x86_64.raw.gz'}
+- name: download openshift v4 client and installer files from online
+  tags: build-rhcos
+  get_url:
+    url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ item }}
+    dest: "{{ ocp_work_dir }}"
+  loop:
+    - "{{ ocp_version }}/openshift-client-linux.tar.gz"
+    - "{{ ocp_version }}/openshift-install-linux.tar.gz"
+  when: rhcos_image_installer_location == "remote"
+
+- name: copy these client, installer files to "rhcos-install"
+  copy:
+    src: "{{ ocp_work_dir }}/{{ item.srcimg }}"
+    dest: "{{ ocp_work_dir }}/rhcos-install/{{ item.destimg }}"
+    force: true
+    remote_src: yes
+  loop:
+    - { srcimg: 'rhcos-installer-kernel-x86_64', destimg: 'vmlinuz' }
+    - { srcimg: 'rhcos-installer-initramfs.x86_64.img', destimg: 'initramfs.img'}
+    - { srcimg: 'rhcos-metal.x86_64.raw.gz', destimg: 'rhcos-metal.x86_64.raw.gz'}
 
 - name: unarchive openshift client and installer file
   tags: build-rhcos
@@ -142,31 +149,22 @@
     - 8080/tcp
     - 5000/tcp
 
-- name: download openshift v4 client and installer from fils from local
+- name: download openshift v4 client and installer from files from local
   tags: build-rhcos
   copy:
-    src: "{{ ansible_env.HOME }}/duststack-ocp-auto-upi/files/common/{{ item }}"
+    src: "{{ ansible_env.HOME }}/{{ ocp_playbook_src_dir }}/files/common/{{ item }}"
     dest: "{{ ocp_work_dir }}"
+    remote_src: yes
   loop:
-    - 133.168.192.in-addr.arpa.zone
-    - ocp.example.com.zone
-    - named.conf
     - haproxy.cfg
     - httpd.py
-
-- name: copy a utility kickstart file on /tmp/ocp-upi
-  copy:
-    src: '{{ ansible_env.HOME }}/duststack-ocp-auto-upi/files/kickstart/{{ item }}'
-    dest: "{{ ocp_work_dir }}"
-  loop:
-    - utility.ks
-    - haproxy.ks
 
 - name: read the ssh public key file
   tags: ocp_public_key
   slurp:
-    src: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
+    src: "{{ ocp_public_keyfile }}"
   register: ocp_public_key
+  become: no
 
 - name: Generate to OCP4 install-config.yaml
   tags: install-config
@@ -178,31 +176,32 @@
   tags: install-config
   command: "{{ ocp_work_dir }}/openshift-install create ignition-configs --dir={{ ocp_work_dir }}/install_dir"
 
-- block:
-  - name: copy a rhel-kvm image for L/B and Utility
-    tags: utility
-    copy:
-      src: '{{ ansible_env.HOME }}/duststack-ocp-auto-upi/files/images/{{ rhn_rhel_image_name }}'
-      dest: /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2
-    loop:
-      - haproxy
-      - utility
+- name: based rhel-kvm image for LB and Utility
+  block:
+    - name: copy a rhel-kvm image for L/B and Utility
+      copy:
+        src: '{{ ansible_env.HOME }}/{{ ocp_playbook_src_dir }}/files/images/{{ rhn_rhel_image_name }}'
+        dest: /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2
+      loop:
+        - haproxy
+        - utility
 
-  - name: resize of rhel-kvm image
-    shell: qemu-img resize /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 {{ libvirt_disk_size }}
-    loop:
-      - utility
-      - haproxy
-  when: rhn_rhel_image
+    - name: resize of rhel-kvm image
+      shell: qemu-img resize /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 {{ libvirt_disk_size[:2] }}
+      loop:
+        - utility
+        - haproxy
+  when: not rhn_rhel_image_use|bool
+  tags: img-build
 
 - block:
   - name: build a utility/haproxy node disk
-    tags: build-utility
-    shell: qemu-img create -f qcow2 /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 {{ libvirt_disk_size }}
+    shell: qemu-img create -f qcow2 /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 {{ libvirt_disk_size[:2] }}
     loop:
       - utility
       - haproxy
-  when: not rhn_rhel_image
+  when: rhn_rhel_image_use == "no"
+  tags: img-build
 
 - block:
   - name: create ocp80/133 network on libvirtd
@@ -229,31 +228,52 @@
     loop:
       - ocp80
       - ocp133
-  ignore_errors: yes
+  tags: img-build
+  when: "'ocp133' not in check_virt_nets.stdout"
 
 - name: create the pull_secret as file 
   copy:
     content: "{{ pull_sec }}"
     dest: "{{ ocp_work_dir }}/ocp4_pull_secret"
 
+- name: generate to kickstart template files for the utility and haproxy for Centos 7
+  tags: ttt
+  template:
+    src: "{{ item }}"
+    dest: "{{ ocp_work_dir }}"
+  loop:
+    - haproxy.ks
+    - utility.ks
+  when: ocp_rhel_os_variant == "rhel7.0"
+
+- name: generate to kickstart template files for the utility and haproxy for Centos 8
+  tags: ttt
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ ocp_work_dir }}/{{ item.dest}}"
+  loop:
+    - { src: 'kickstart-haproxy-rhel-8.cfg', dest: 'haproxy.ks' }
+    - { src: 'kickstart-utility-rhel-8.cfg', dest: 'utility.ks' }
+  when: ocp_rhel_os_variant == "rhel8.0"
+
 - name: run httpd.py server 
   shell: nohup python3 {{ ocp_work_dir }}/httpd.py &
 
 - name: create a utility node
   tags: build-utility
-  shell: virt-install --name {{ ocp_cluster_name }}-utility -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel_mirror_url }} --network network={{ ocp_vir_net }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-utility.qcow2,format=qcow2 --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/utility.ks"
+  shell: virt-install --name {{ ocp_cluster_name }}-utility -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-utility.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/utility.ks biosdevname=0 net.ifnames=0"
 
 - name: create a haproxy node
   tags: build-haproxy
-  shell: virt-install --name {{ ocp_cluster_name }}-haproxy -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel_mirror_url }} --network network={{ ocp_vir_net }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-haproxy.qcow2,format=qcow2 --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/haproxy.ks"
+  shell: virt-install --name {{ ocp_cluster_name }}-haproxy -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-haproxy.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/haproxy.ks biosdevname=0 net.ifnames=0"
 
 - name: wait for build a VMs
   pause: 
-    minutes: 15
+    minutes: 10
 
 - name: customized the utility node
-  tags: utility-customized
-  shell: virt-customize -m {{ utility_nodes_memory }} -a /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 --uninstall cloud-init --ssh-inject root:file:{{ ansible_env.HOME }}/{{ ocp_public_keyfile }} --selinux-relabel
+  tags: build-utility-customized
+  shell: LIBGUESTFS_BACKEND=direct virt-customize -m {{ utility_nodes_memory }} -a /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 --uninstall cloud-init --ssh-inject root:file:{{ ocp_public_keyfile }} --selinux-relabel
   loop:
     - utility
     - haproxy
@@ -266,3 +286,15 @@
   loop:
     - "{{ ocp_cluster_name }}-utility"
     - "{{ ocp_cluster_name }}-haproxy"
+
+- name: archive materials
+  archive:
+    path: /tmp/ocp-upi
+    dest: /tmp/ocp-upi.tar.bz2    
+  tags: ocp-upi
+
+- name: push the material archive upi.tar.bz2 file to utility
+  copy:
+    src: /tmp/ocp-upi.tar.bz2
+    dest: /tmp/ocp-upi.tar.bz2
+  tags: ocp-upi
