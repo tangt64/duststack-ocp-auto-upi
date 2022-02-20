@@ -1,9 +1,0 @@
-- hosts: localhost
-  tasks:
-  - name:
-    virt_net:
-      command: list_nets
-    register: check_virt_netns
-
-  - debug:
-      msg: check_virt_netns

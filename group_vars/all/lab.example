@@ -1,26 +1,70 @@
-ocp_work_dir: /tmp/root/
+ocp_work_dir: /tmp/ocp-upi/root
 ocp_version: 4.5.14
 ocp_architecture: x86_64
 ocp_base_domain: example.com
 ocp_cluster_name: ocp
+ocp_master_node_set: 3
 
-rhn_user: ''
+dns_hostname: utility
+registry_hostname: registry
+
+rhel_mirror_url: https://mirror.kakao.com/centos/8-stream/BaseOS/x86_64/os/
+libvirt_disk_size: 50G
+libvirtd_nested: false
+libvirtd_dns_server: "192.168.133.2,168.126.63.1"
+
+utility_nodes_memory: 4096
+utility_nodes_cpu: 1
+haproxy_node_memory: 4096
+haproxy_node_cpu: 2
+
+infra_node_memory: 8192
+infra_node_cpu: 4
+
+master_node_memory: 16000
+master_node_cpu: 4
+worker_node_memory: 8192
+worker_node_cpu: 4
+
+
+internal_registry_id: redhat
+internal_registry_pw: redhat
+
+rhcos_bootstrap_node_cpu: 4
+rhcos_bootstrap_node_memory: 8192
+rhcos_master_node_cpu: 4
+rhcos_master_node_memory: 8192
+
+rhcos_worker_node_cpu: 4
+rhcos_worker_node_memory: 8192
+
+rhcos_nameserver: 192.168.133.2
+rhcos_interface_name: ens3
+
+rhn_user: 'xinick'
 rhn_pass: ''
-rhn_rhel_image: rhel-server-7.8-update-3-x86_64-kvm.qcow2
+rhn_rhel_image_name: rhel-server-7.9-x86_64-kvm.qcow2
 rhn_rhcos_url: 'https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos'
 rhn_rhcos_major: 4.5
 rhn_rhcos_minor: 4.5.6
 rhn_rhcos_image: rhcos-metal.x86_64.raw.gz
 rhn_rhcos_kernel: rhcos-installer-kernel-x86_64
 rhn_rhcos_initramfs: rhcos-installer-initramfs.x86_64.img
-rhn_rhel_image_able: no
+rhn_rhel_image: no
 
-ocp_vir_net: ocp-133
-ocp_ignition_url: 192.168.133.2
+rhn_rhel_image_use: true
+
+rhcos_image_installer_location: remote
+
+ocp_rhel_os_variant: 'rhel8.0'
+
+ocp_vir_net: ocp133
+ocp_vir_net_internal: ocp80
+ocp_ignition_url: 192.168.133.1
 ocp_vir_netr: 192.168.133.
 
-ocp_public_keyfile: /root/.ssh/id_rsa.pub
-ocp_public_key: 
+ocp_public_keyfile: /home/tang/.ssh/id_rsa.pub
+ocp_playbook_src_dir: duststack-ocp-auto-upi
 
 web_port: 8080
 web_root: /var/www/w3
