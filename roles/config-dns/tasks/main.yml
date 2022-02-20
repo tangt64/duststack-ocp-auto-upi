@@ -17,6 +17,12 @@
     owner: root
     group: named
 
+- name: open bind service on firewalld
+  firewalld:
+    service: dns
+    state: enabled
+    permanent: yes
+
 - name: generate to bind configure file 
   template:
     src: "{{ item }}"

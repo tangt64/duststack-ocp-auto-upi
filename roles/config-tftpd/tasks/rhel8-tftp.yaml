@@ -12,14 +12,19 @@
     name: "{{ item }}"
     state: directory
   loop:
-    - /tftpboot/rhcos
-    - /tftpboot/pxelinux.cfg
+    - /var/lib/tftpboot/rhcos
+    - /var/lib/tftpboot/pxelinux.cfg
 
+- name: open tftpd service port
+  firewalld:
+    service: tftp
+    permanent: yes
+    state: enabled
 
 - name: copy a tftpd configuration file
   template:
     src: "{{ item }}"
-    dest: /tftpboot/pxelinux.cfg/default
+    dest: /var/lib/tftpboot/pxelinux.cfg/default
   loop:
     - ocp-tftpd.conf
 
@@ -37,7 +42,7 @@
 - name: copy rhcos kernel and ramdisk image
   copy:
     src: "{{ ocp_work_dir }}/rhcos-install/{{ item }}"
-    dest: /tftpboot/rhcos/{{ item }}
+    dest: /var/lib/tftpboot/rhcos/{{ item }}
   loop:
     - initramfs.img
     - vmlinuz
