@@ -21,6 +21,7 @@
   firewalld:
     service: dns
     state: enabled
+    immediate: yes
     permanent: yes
 
 - name: generate to bind configure file 
