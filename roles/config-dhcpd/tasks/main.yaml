@@ -1,10 +1,27 @@
 - name: install dhcpd
-  package:
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - dhcp-common
+    - dhcp
+  when: ocp_rhel_os_variant == "rhel7.0"
+
+- name: install dhcpd
+  yum:
     name: "{{ item }}"
     state: present
   loop:
     - dhcp-common
     - dhcp-server
+  when: ocp_rhel_os_variant == "rhel8.0"
+
+- name: open the dhcp service to Firewalld
+  firewalld:
+    service: dhcp
+    immediate: yes
+    state: enabled
+    permanent: yes
 
 - name: copy dhcpd.conf file 
   template:

@@ -1,7 +1,10 @@
 - name: build and install VMs
   hosts: localhost
   roles:
-    - { role: libvirt-build-vms, tags: [ 'build-vm' ] }
+    - { role: build-vms, tags: [ 'build-vm' ] }
+  environment:
+    LIBGUESTFS_DEBUG: 1 
+    LIBGUESTFS_TRACE: 1
 
 - name: configure dhcp server
   hosts: utility
@@ -27,18 +30,33 @@
   roles:
     - { role: config-utility, tags: [ 'config-utility','stage2'] }
 
+- name: config TLS key
+  hosts: utility
+  roles:
+    - { role: config-tls-key, tags: [ 'config-utility','stage2','config-tls'] }
+
+- name: mirror RPMs from the Mirror server
+  hosts: utility
+  roles:
+    - { role: mirror-rpms, tags: [ 'mirror-rpms','stage2','rpms'], when: yum_rpms_mirror == "yes" }
+  
 - name: setup OpenShift internal registry server
   hosts: registry
   roles:
-    - { role: mirror-registry, tags: [ 'config-registry','stage2' ] }
+    - { role: mirror-registry, tags: [ 'mirror-registry','stage2' ] }
   environment: 
     KUBECONFIG: '{{ ocp_work_dir }}/install_dir/auth/kubeconfig'
     PATH: '{{ ansible_env.PATH }}:/tmp/ocp-upi/root/'
 
+- name: generate to OCP install-config.yaml
+  hosts: utility
+  roles:
+    - { role: config-ocp-config-gen, tags: [ 'install-config', 'stage2' ] }
+
 - name: install openshift cluster
   hosts: localhost
   roles:
-    - { role: openshift-installer, tags: [ 'ocp-vm','stage3' ] }
+    - { role: build-ocp-vms, tags: [ 'ocp-vm','stage3' ] }
 
 - name: start OCP VMs 
   hosts: localhost
@@ -59,6 +77,7 @@
   hosts: utility
   roles:
     - { role: post-setup, tags: [ 'post-setup','stage4' ] }
+    - { role: disconnected-bootstrap-node, tags: [ 'disconnected-bootstrap','stage4' ] }
   environment:
     KUBECONFIG: /tmp/ocp-upi/root/install_dir/auth/kubeconfig
     PATH: '{{ ansible_env.PATH }}:/tmp/ocp-upi/root/'

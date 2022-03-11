@@ -1,4 +1,9 @@
 ---
+- name: make a .kube directory to root user
+  file:
+    path: '{{ ansible_env.HOME }}/.kube/'
+    state: directory
+
 - name: copy kubeconfig files on the '{{ inventory_hostname }}'
   copy:
     src: '{{ ocp_work_dir }}/install_dir/auth/kubeconfig'

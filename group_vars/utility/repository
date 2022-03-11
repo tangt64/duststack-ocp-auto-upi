@@ -1,0 +1,2 @@
+yum_local_repository: /opt/mirror
+yum_rpms_mirror: yes

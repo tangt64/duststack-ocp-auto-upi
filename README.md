@@ -9,6 +9,12 @@
 - vSphere
 - RHV
 
+## 추가기능
+
+```sh
+$ ansible-galaxy collection install containers.podman
+```
+
 ## 기능
 
 플레이북 기반으로 빠르게 가상머신 생성 및 오픈 시프트 설치를 도와주는 도구 입니다. 현재는 libvirt만 지원하기 때문에 PoC용도로 적절합니다. 최종적으로 실무 환경에서 설치가 가능하도록 기능을 지원할 예정 입니다.

@@ -44,14 +44,14 @@ zone "0.in-addr.arpa" IN {
 	allow-update { none; };
 };
 
-zone "{{ ocp_cluster_name }}.{{ ocp_base_domain }}" IN {
+zone "{{ ocp_base_domain }}" IN {
 	type master;
-	file "{{ ocp_cluster_name }}.{{ ocp_base_domain }}.zone";
+	file "{{ ocp_base_domain }}.zone";
 	allow-update { none; };
 };
 
 zone "133.168.192-addr.arpa" IN {
 	type master;
-	file "{{ ocp_cluster_name }}.{{ ocp_base_domain }}.rev.zone";
+	file "{{ ocp_base_domain }}.rev.zone";
 	allow-update { none; };
 };

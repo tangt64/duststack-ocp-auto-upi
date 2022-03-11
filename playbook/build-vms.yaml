@@ -1,5 +1,0 @@
-- name: build a VMs for lab
-  hosts: localhost
-  roles:
-    - build-vms
-

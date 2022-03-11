@@ -1,0 +1,16 @@
+- name: create RPMs mirror directory in /opt/mirror
+  file:
+    path: '{{ yum_local_repository }}'
+    state: present
+
+- name: RPM repositories download to local from the remote server
+  command: 'reposync -g {{ yum_local_repository }}'
+
+- name: install the "createrepo" package on the "{{ ansible_inventory['hostname'] }}"
+  yum:
+    name: createrepo_c
+    state: latest
+
+- name: make a RPM metadata to the local RPM repository
+  command: 'createrepo -g {{ yum_local_repository }}'
+

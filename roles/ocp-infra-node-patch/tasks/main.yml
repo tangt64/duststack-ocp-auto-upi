@@ -19,8 +19,6 @@
     - 'router0.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
     - 'router1.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'
 
-- name: RWX storage no has the cluster
-  shell: oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
 
 #- name: patch label for infra node selector
 #  shell: oc patch ingresscontroller default -n openshift-ingress-operator --type merge -p '{"spec":{"defaultCertificate":{"name":"custom-certs-default"}}}'

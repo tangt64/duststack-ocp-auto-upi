@@ -6,27 +6,27 @@ $TTL 900
 							IN NS {{ dns_hostname }}.{{ ocp_base_domain }}.
 ;
 2.133.168.192.in-addr.arpa.  IN PTR utility
-250.133.168.192.in-addr.arpa.  IN PTR haproxy
+250.133.168.192.in-addr.arpa.  IN PTR haproxy.ocp.example.com.
 ;
-9.133.168.192.in-addr.arpa.  IN PTR bastion
+9.133.168.192.in-addr.arpa.  IN PTR bastion.ocp.example.com.
 ;
-10.133.168.192.in-addr.arpa  IN PTR bootstrap
-21.133.168.192.in-addr.arpa  IN PTR master0
-22.133.168.192.in-addr.arpa  IN PTR master1
-23.133.168.192.in-addr.arpa  IN PTR master2
+10.133.168.192.in-addr.arpa  IN PTR bootstrap.ocp.example.com.
+21.133.168.192.in-addr.arpa  IN PTR master0.ocp.example.com.
+22.133.168.192.in-addr.arpa  IN PTR master1.ocp.example.com.
+23.133.168.192.in-addr.arpa  IN PTR master2.ocp.example.com.
 ;
-31.133.168.192.in-addr.arpa  IN PTR node0
-32.133.168.192.in-addr.arpa  IN PTR node1
+31.133.168.192.in-addr.arpa  IN PTR node0.ocp.example.com.
+32.133.168.192.in-addr.arpa  IN PTR node1.ocp.example.com.
 ;
-41.133.168.192.in-addr.arpa  IN PTR infra0
-42.133.168.192.in-addr.arpa  IN PTR infra1
+41.133.168.192.in-addr.arpa  IN PTR infra0.ocp.example.com.
+42.133.168.192.in-addr.arpa  IN PTR infra1.ocp.example.com.
 ;
-51.133.168.192.in-addr.arpa  IN PTR router0
-52.133.168.192.in-addr.arpa  IN PTR router1
+51.133.168.192.in-addr.arpa  IN PTR router0.ocp.example.com.
+52.133.168.192.in-addr.arpa  IN PTR router1.ocp.example.com.
 ;
-250.133.168.192.in-addr.arpa  IN PTR api
-250.133.168.192.in-addr.arpa  IN PTR api-int
+250.133.168.192.in-addr.arpa  IN PTR api.ocp.example.com.
+250.133.168.192.in-addr.arpa  IN PTR api-int.ocp.example.com.
 ;
-21.133.168.192.in-addr.arpa  IN PTR etcd0
-22.133.168.192.in-addr.arpa  IN PTR etcd1
-23.133.168.192.in-addr.arpa  IN PTR etcd2
+21.133.168.192.in-addr.arpa  IN PTR etcd0.ocp.example.com.
+22.133.168.192.in-addr.arpa  IN PTR etcd1.ocp.example.com.
+23.133.168.192.in-addr.arpa  IN PTR etcd2.ocp.example.com.

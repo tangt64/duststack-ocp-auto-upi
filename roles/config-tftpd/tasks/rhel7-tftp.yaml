@@ -1,5 +1,5 @@
 - name: install tftpd
-  package:
+  yum:
     name: "{{ item }}"
     state: present
   loop:

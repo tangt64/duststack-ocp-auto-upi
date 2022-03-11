@@ -1,0 +1,31 @@
+---
+- debug:
+    msg: '{{ ocp_public_keyfile }}'
+
+- name: create openssh keypair
+  openssh_keypair:
+    path: /tmp/id_ssh_ocp
+    type: rsa
+    size: 4096
+
+- name:
+  shell: sed 's/^/ /' '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ ocp_base_domain }}.crt'
+  register: additional_trust_bundle_tls
+
+- debug:
+    msg: '{{ additional_trust_bundle_tls }}'
+
+- name: read the {{ ocp_public_keyfile }} for install-config
+  slurp: 
+    src: /tmp/id_ssh_ocp.pub
+  register: ssh_public
+
+- name: Generate to OCP4 install-config.yaml
+  tags: install-config
+  template:
+    src: install-config.yaml.j2
+    dest: "{{ ocp_work_dir }}/install_dir/install-config.yaml"
+
+- name: openshift ignition config
+  tags: install-config
+  command: "{{ ocp_work_dir }}/openshift-install create ignition-configs --dir={{ ocp_work_dir }}/install_dir"

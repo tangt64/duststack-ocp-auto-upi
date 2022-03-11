@@ -1,0 +1,17 @@
+- name: open the tftp, dhcp and http services port to Firewalld
+  firewalld:
+    service: '{{ item }}'
+    permanent: yes
+    state: enabled
+    zone: public 
+    immediate: yes
+  loop:
+    - tftp
+    - dhcp
+
+- name: open the tftp, dhcp and http services port to Firewalld
+  firewalld:
+    port: 8080/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes

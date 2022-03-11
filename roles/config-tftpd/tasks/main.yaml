@@ -1,5 +1,8 @@
+- import_tasks: firewalld.yaml
+
 - import_tasks: rhel7-tftp.yaml
   when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7")
 
 - import_tasks: rhel8-tftp.yaml
   when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "8")
+

@@ -1,0 +1,3 @@
+- name: the bootstrap detach from the OCP cluster
+  command: "{{ ocp_work_dir }}/openshift-install --dir={{ ocp_work_dir }}/install_dir wait-for bootstrap-complete --log-level debug"
+

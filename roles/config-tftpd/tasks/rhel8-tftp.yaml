@@ -15,12 +15,6 @@
     - /var/lib/tftpboot/rhcos
     - /var/lib/tftpboot/pxelinux.cfg
 
-- name: open tftpd service port
-  firewalld:
-    service: tftp
-    permanent: yes
-    state: enabled
-
 - name: copy a tftpd configuration file
   template:
     src: "{{ item }}"

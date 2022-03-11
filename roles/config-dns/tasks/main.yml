@@ -6,14 +6,14 @@
 - name: generate to bind zone files
   template:
     src: ocp-domain.zone
-    dest: /var/named/{{ ocp_cluster_name }}.{{ ocp_base_domain }}.zone
+    dest: /var/named/{{ ocp_base_domain }}.zone
     owner: root
     group: named
 
 - name: generate to bind rev file
   template:
     src: ocp-domain.zone.rev
-    dest: /var/named/{{ ocp_cluster_name }}.{{ ocp_base_domain }}.rev.zone  
+    dest: /var/named/{{ ocp_base_domain }}.rev.zone  
     owner: root
     group: named
 

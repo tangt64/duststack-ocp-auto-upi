@@ -25,8 +25,8 @@
     name: "{{ item }}"
     state: running
   loop:
-    - ocp-worker-0
-    - ocp-worker-1
+    - ocp-node-0
+    - ocp-node-1
     - ocp-infra-0
     - ocp-infra-1
     - ocp-router-0

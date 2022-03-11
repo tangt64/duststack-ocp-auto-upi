@@ -1,8 +1,8 @@
 #!/bin/sh
-podman run --name openshift-mirror-registry -p 5000:5000 \
--v /opt/registry/data:/var/lib/registry:z \
--v /opt/registry/certs:/certs:z \
--e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/{{ registry_hostname }}.{{ ocp_cluster_name}}.{{ ocp_base_domain }}.crt \
--e REGISTRY_HTTP_TLS_KEY=/certs/{{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}.key \
--e REGISTRY_COMPATIBILITY_SCHEMA1_ENABLED=true \
+podman run --name openshift-mirror-registry -p {{ registry_port }}:5000 \
+-v {{ registry_data }}:/var/lib/registry:z \
+-v {{ registry_certs }}:/certs:z \
+-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/{{ tls_public_key_name }} \
+-e REGISTRY_HTTP_TLS_KEY=/certs/{{ tls_private_key_name }} \
+-e REGISTRY_COMPATIBILITY_SCHEMA1_ENABLED={{ compatibility_schema1 }} \
 -d docker.io/library/registry:2

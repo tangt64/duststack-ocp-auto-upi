@@ -1,3 +1,42 @@
+- block:
+  - name: install podman on utility server for RHEL and CentOS 7
+    package:
+      name: "{{ item }}"
+      state: latest
+    loop:
+      - podman
+      - httpd-tools
+      - pyOpenSSL
+      - epel-release
+      - jq
+      - python2-cryptography
+
+  - name: start io.podman service for RHEL 7
+    systemd:
+      name: io.podman
+      state: started
+      enabled: yes
+  when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7")
+
+- block:
+  - name: install podman on utility server for RHEL and CentOS 8
+    package:
+      name: "{{ item }}"
+      state: latest
+    loop:
+      - podman
+      - httpd-tools
+      - epel-release
+      - jq
+      - python3-cryptography
+
+  - name: start podman service for RHEL 8
+    systemd:
+      name: podman
+      state: started
+      enabled: yes
+  when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "8")
+
 - name: create folders for the registry
   file:
     path: "/opt/registry/{{ item }}"
@@ -31,13 +70,23 @@
        mode: 0744
    - command: /bin/sh {{ ocp_work_dir }}/podman.sh
 
-- name: create the pull_secret as file
+- name: create the remote pull_secret as file
   copy:
-    content: "{{ pull_sec }}"
-    dest: "{{ ocp_work_dir }}/ocp4_pull_secret_json"
+    content: '{{ remote_pull_secret }}'
+    dest: '{{ ocp_work_dir }}/ocp4_pull_secret_json'
+  when: image_pull_type == "remote"
+
+- name: create the local pull_secret as file
+  copy:
+    content: '{{ local_pull_secret }}'
+    dest: '{{ ocp_work_dir }}/ocp4_pull_secret_json'
+  when: image_pull_type == "local"
 
 - name: convert to the pull secret by jq
-  shell: cat {{ ocp_work_dir }}/ocp4_pull_secret | jq .  > {{ ocp_work_dir }}/pull_secret.json
+  shell: cat {{ ocp_work_dir }}/ocp4_pull_secret_json | jq .  > {{ ocp_work_dir }}/pull_secret.json
+
+- name: login podman
+  shell: podman login -u {{ podman_username }} -p {{ podman_password }} -p {{ registry_port }}:5000 --tls-verify=false {{ registry_domain }}:{{ registry_port }} 
 
 - name: mirror the repository
-  shell: "{{ ocp_work_dir }}/oc adm -a {{ ocp_work_dir }}/pull_secret.json release mirror --from=quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}-{{ ocp_architecture }} --to={{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4 --to-release-image={{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4:{{ ocp_version }}-{{ ocp_architecture }}"
+  shell: "{{ ocp_work_dir }}/oc adm --insecure-skip-tls-verify=true -a {{ ocp_work_dir }}/pull_secret.json release mirror --from=quay.io/openshift-release-dev/ocp-release:{{ ocp_version }}-{{ ocp_architecture }} --to={{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4 --to-release-image={{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4:{{ ocp_version }}-{{ ocp_architecture }}"

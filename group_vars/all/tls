@@ -1,0 +1,8 @@
+tls_root_directory: /etc/ssl/certs
+tls_private_key_name: '{{ ocp_base_domain }}_private.pem'
+tls_csr_key_name: '{{ ocp_base_domain }}.csr'
+tls_csr_fullchain: '{{ ocp_base_domain }}_fullchain.pem'
+tls_public_key_name: '{{ ocp_base_domain }}.crt'
+tls_default_directory: /etc/ssl/certs/
+
+additional_tls: no

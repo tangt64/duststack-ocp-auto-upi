@@ -2,3 +2,13 @@ podman_username: admin
 podman_password: openshift
 registry_work_dir: /tmp/
 ocp_cluster_name: ocp
+registry_domain: registry.ocp.example.com
+registry_port: 5000
+registry_data: /opt/registry/data
+registry_certs: /opt/registry/certs
+
+http_tls_certificate: /certs/example.com.crt
+http_tls_key: /certs/example.com_private.pem
+compatibility_schema1: true
+
+

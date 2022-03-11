@@ -1,4 +1,0 @@
-- name: config utility server
-  hosts: utility
-  roles:
-    - config-utility

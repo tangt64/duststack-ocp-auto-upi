@@ -164,17 +164,6 @@
   slurp:
     src: "{{ ocp_public_keyfile }}"
   register: ocp_public_key
-  become: no
-
-- name: Generate to OCP4 install-config.yaml
-  tags: install-config
-  template:
-    src: install-config.yaml.j2
-    dest: "{{ ocp_work_dir }}/install_dir/install-config.yaml"
-
-- name: openshift ignition config
-  tags: install-config
-  command: "{{ ocp_work_dir }}/openshift-install create ignition-configs --dir={{ ocp_work_dir }}/install_dir"
 
 - name: based rhel-kvm image for LB and Utility
   block:
@@ -231,13 +220,7 @@
   tags: img-build
   when: "'ocp133' not in check_virt_nets.stdout"
 
-- name: create the pull_secret as file 
-  copy:
-    content: "{{ pull_sec }}"
-    dest: "{{ ocp_work_dir }}/ocp4_pull_secret"
-
 - name: generate to kickstart template files for the utility and haproxy for Centos 7
-  tags: ttt
   template:
     src: "{{ item }}"
     dest: "{{ ocp_work_dir }}"
@@ -247,7 +230,6 @@
   when: ocp_rhel_os_variant == "rhel7.0"
 
 - name: generate to kickstart template files for the utility and haproxy for Centos 8
-  tags: ttt
   template:
     src: "{{ item.src }}"
     dest: "{{ ocp_work_dir }}/{{ item.dest}}"
@@ -259,13 +241,28 @@
 - name: run httpd.py server 
   shell: nohup python3 {{ ocp_work_dir }}/httpd.py &
 
-- name: create a utility node
-  tags: build-utility
-  shell: virt-install --name {{ ocp_cluster_name }}-utility -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-utility.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/utility.ks biosdevname=0 net.ifnames=0"
+- name: RHEL 7 
+  block:
+  - name: create a utility node
+    tags: build-utility
+    shell: virt-install --name {{ ocp_cluster_name }}-utility -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel7_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-utility.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/utility.ks biosdevname=0 net.ifnames=0"
 
-- name: create a haproxy node
-  tags: build-haproxy
-  shell: virt-install --name {{ ocp_cluster_name }}-haproxy -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-haproxy.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/haproxy.ks biosdevname=0 net.ifnames=0"
+  - name: create a haproxy node
+    tags: build-haproxy
+    shell: virt-install --name {{ ocp_cluster_name }}-haproxy -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel7_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-haproxy.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/haproxy.ks biosdevname=0 net.ifnames=0"
+  when: ocp_rhel_os_variant == "rhel7.0"
+
+- name:  RHEL 8
+  block:
+  - name: create a utility node
+    tags: build-utility
+    shell: virt-install --name {{ ocp_cluster_name }}-utility -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel8_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-utility.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/utility.ks biosdevname=0 net.ifnames=0"
+
+  - name: create a haproxy node
+    tags: build-haproxy
+    shell: virt-install --name {{ ocp_cluster_name }}-haproxy -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel8_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-haproxy.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/haproxy.ks biosdevname=0 net.ifnames=0"
+  when: ocp_rhel_os_variant == "rhel8.0"
+
 
 - name: wait for build a VMs
   pause: 
@@ -273,7 +270,7 @@
 
 - name: customized the utility node
   tags: build-utility-customized
-  shell: LIBGUESTFS_BACKEND=direct virt-customize -m {{ utility_nodes_memory }} -a /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 --uninstall cloud-init --ssh-inject root:file:{{ ocp_public_keyfile }} --selinux-relabel
+  shell: virt-customize -m {{ utility_nodes_memory }} -a /var/lib/libvirt/images/{{ ocp_cluster_name }}-{{ item }}.qcow2 --uninstall cloud-init --ssh-inject root:file:{{ ocp_public_keyfile }} --selinux-relabel
   loop:
     - utility
     - haproxy
@@ -288,13 +285,14 @@
     - "{{ ocp_cluster_name }}-haproxy"
 
 - name: archive materials
-  archive:
-    path: /tmp/ocp-upi
-    dest: /tmp/ocp-upi.tar.bz2    
-  tags: ocp-upi
+  tags: archive
+  block:
+  - name: archive the ocp-upi directory
+    archive:
+      path: /tmp/ocp-upi
+      dest: /tmp/ocp-upi.tar.bz2    
 
-- name: push the material archive upi.tar.bz2 file to utility
-  copy:
-    src: /tmp/ocp-upi.tar.bz2
-    dest: /tmp/ocp-upi.tar.bz2
-  tags: ocp-upi
+  - name: push the material archive upi.tar.bz2 file to utility
+    copy:
+      src: /tmp/ocp-upi.tar.bz2
+      dest: /tmp/ocp-upi.tar.bz2

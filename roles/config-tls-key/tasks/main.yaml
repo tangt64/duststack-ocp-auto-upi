@@ -1,0 +1,70 @@
+- name: ensure directory exists for local self-signed TLS certs.
+  file:
+    path: '/etc/ssl/certs/{{ ocp_base_domain }}'
+    state: directory
+
+- name: install a cryptography package
+  yum:
+    name: '{{ item }}'
+    state: latest
+  loop:
+    - pyOpenSSL
+    - python2-cryptography
+  when: ocp_rhel_os_variant == "rhel7.0"
+
+- name: install a cryptography package
+  yum:
+    name: python3-pyOpenSSL
+    state: latest
+  when: ocp_rhel_os_variant == "rhel8.0"
+
+- name: generate an OpenSSL private key
+  openssl_privatekey:
+    path: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ tls_private_key_name }}'
+
+- name: generate an OpenSSL CSR
+  openssl_csr:
+    path: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ tls_csr_key_name }}'  
+    privatekey_path: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ tls_private_key_name }}'
+    common_name: '{{ ocp_base_domain }}'
+    subject_alt_name: 'DNS:registry.{{ ocp_cluster_name }}.{{ ocp_base_domain }}'    
+    basic_constraints:
+      - CA:TRUE
+    basic_constraints_critical: True
+    backup: True
+
+- name: generate a self signed OpenSSL certificate
+  openssl_certificate:
+    path: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ tls_public_key_name }}'
+    privatekey_path: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ tls_private_key_name }}'
+    csr_path: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ tls_csr_key_name }}'
+    provider: selfsigned
+  register: new_certificate
+
+- name: read the {{ ocp_base_domain }} from the {{ tls_default_directory }}
+  shell: cat '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ ocp_base_domain }}.crt'
+  register: additional_trust_bundle_tls
+
+- name: load the {{ ocp_base_domain }} CRT file
+  slurp:
+    src: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ ocp_base_domain }}.crt'
+  register: additional_trust_bundle_tls
+
+- name: copy the domain CA file to /etc/pki/ca-trust/source/anchors {{ tls_public_key_name }}
+  copy:
+    src: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ tls_public_key_name }}'
+    dest: /etc/pki/ca-trust/source/anchors/openshift-ca.crt
+    remote_src: yes
+
+- name: add the self signed certificate to the list of trusted certificates in the "{{ ansible_inventory['hostname'] }}"
+  command: update-ca-trust
+  when: new_certificate is changed
+
+- name: copy all of .CRT and .PEM files to {{ registry_certs }}
+  copy: 
+    src: '{{ tls_default_directory }}/{{ ocp_base_domain }}/{{ item }}'
+    dest: '/opt/registry/certs/' 
+    remote_src: yes
+  loop:
+    - '{{ tls_private_key_name }}'
+    - '{{ tls_public_key_name }}'

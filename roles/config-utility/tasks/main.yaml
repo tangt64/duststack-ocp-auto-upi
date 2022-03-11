@@ -4,10 +4,6 @@
     state: latest
   loop:
     - python3
-    - tftp-server
-    - tftp
-    - dhcp-server
-    - dhcp-common
     - zip
     - tar
 
@@ -20,11 +16,9 @@
 - name: run httpd.py server
   shell: nohup python3 {{ ocp_work_dir }}/httpd.py &
 
-- name: enable to tftpd and dhcpd service
-  systemd:
-    name: "{{ item }}"
-    state: started
-    enabled: yes
-  loop:
-    - tftp
-    - dhcpd
+- name: open the {{ web_port }} to Firewalld
+  firewalld:
+    port: '{{ web_port }}/tcp'
+    permanent: yes
+    state: enabled
+    immediate: yes

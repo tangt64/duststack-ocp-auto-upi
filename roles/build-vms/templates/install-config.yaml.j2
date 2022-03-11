@@ -19,12 +19,20 @@ networking:
   - 172.30.0.0/16
 platform:
   none: {}
-pullSecret: '{{ pull_sec }}'
+{% if image_pull_type == 'local' %}
+pullSecret: '{{ local_pull_secret }}'
+{% else %}
+pullSecret: '{{ remote_pull_secret }}'
+{% endif %}
+additionlaTrustBundle: | 
+'{{ additional_trust_bundle_tls }}'
+
 sshKey: {{ ocp_public_key.content | b64decode }}
+
 imageContentSources:
 - mirrors:
   - {{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
-  - {{ registry_hostname }}.{{ ocp_cluster_name}}.{{ ocp_base_domain }}:5000/ocp4/openshift4
+  - {{ registry_hostname }}.{{ ocp_cluster_name }}.{{ ocp_base_domain }}:5000/ocp4/openshift4
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev

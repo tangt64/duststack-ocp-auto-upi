@@ -1,8 +1,0 @@
-- name: build a registry server for openshift4
-  hosts: registry
-
-  roles:
-    - mirror-registry
-  environment:
-    PATH: /var/local/nvm/versions/node/v4.2.1/bin:{{ ansible_env.PATH }}
-
