@@ -21,7 +21,7 @@ rhcos_worker_node_memory: 8192
 rhcos_nameserver: 192.168.133.2
 rhcos_interface_name: ens3
 
-rhn_user: 'xinick'
+rhn_user: ''
 rhn_pass: ''
 rhn_rhel_image_name: rhel-server-7.9-x86_64-kvm.qcow2
 rhn_rhcos_url: 'https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos'

@@ -1,0 +1,13 @@
+ocp_work_dir: /tmp/ocp-upi/root
+ocp_version: 4.5.14
+ocp_architecture: x86_64
+ocp_base_domain: example.com
+ocp_cluster_name: ocp
+ocp_master_node_set: 3
+
+dns_hostname: utility
+registry_hostname: registry
+image_pull_type: remote
+
+rhel7_mirror_url: http://mirror.kakao.com/centos/7.9.2009/os/x86_64/
+rhel8_mirror_url: https://mirror.kakao.com/centos/8-stream/BaseOS/x86_64/os/
