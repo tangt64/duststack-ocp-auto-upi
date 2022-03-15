@@ -1,3 +1,14 @@
+- name: restart the pxe, dhcpd services from the utility server
+  tags: restart-pxe-dhcp
+  delegate_to: "{{ groups['utility'][0] }}"
+
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - tftp
+    - dhcpd
+
 - name: build a bootstrap node
   tags: build-bootstrap
   shell: 

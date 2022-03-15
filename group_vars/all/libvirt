@@ -1,16 +1,3 @@
-ocp_work_dir: /tmp/ocp-upi/root
-ocp_version: 4.5.14
-ocp_architecture: x86_64
-ocp_base_domain: example.com
-ocp_cluster_name: ocp
-ocp_master_node_set: 3
-
-dns_hostname: utility
-registry_hostname: registry
-image_pull_type: remote
-
-rhel7_mirror_url: http://mirror.kakao.com/centos/7.9.2009/os/x86_64/
-rhel8_mirror_url: https://mirror.kakao.com/centos/8-stream/BaseOS/x86_64/os/
 libvirt_disk_size: 50G
 libvirtd_nested: false
 libvirtd_dns_server: "192.168.133.2,168.126.63.1"
@@ -18,18 +5,10 @@ libvirtd_dns_server: "192.168.133.2,168.126.63.1"
 utility_nodes_memory: 4096
 utility_nodes_cpu: 1
 haproxy_node_memory: 4096
-haproxy_node_cpu: 2
+haproxy_node_cpu: 1
 
 infra_node_memory: 8192
-infra_node_cpu: 4
-
-master_node_memory: 8192
-master_node_cpu: 4
-worker_node_memory: 8192
-worker_node_cpu: 4
-
-internal_registry_id: redhat
-internal_registry_pw: redhat
+infra_node_cpu: 2
 
 rhcos_bootstrap_node_cpu: 4
 rhcos_bootstrap_node_memory: 8192
@@ -51,8 +30,6 @@ rhn_rhcos_minor: 4.5.6
 rhn_rhcos_image: rhcos-metal.x86_64.raw.gz
 rhn_rhcos_kernel: rhcos-installer-kernel-x86_64
 rhn_rhcos_initramfs: rhcos-installer-initramfs.x86_64.img
-rhn_rhel_image: no
-
 rhn_rhel_image_use: true
 
 rhcos_image_installer_location: remote
@@ -62,8 +39,6 @@ ocp_rhel_os_variant: 'rhel7.0'
 ocp_vir_net: ocp133
 ocp_vir_net_internal: ocp80
 ocp_ignition_url: 192.168.133.1
-ocp_vir_netr: 192.168.133.
-
 ocp_public_keyfile: /home/tang/.ssh/id_rsa.pub
 ocp_playbook_src_dir: duststack-ocp-auto-upi
 
