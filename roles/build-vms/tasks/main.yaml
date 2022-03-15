@@ -149,16 +149,6 @@
     - 8080/tcp
     - 5000/tcp
 
-- name: download openshift v4 client and installer from files from local
-  tags: build-rhcos
-  copy:
-    src: "{{ ansible_env.HOME }}/{{ ocp_playbook_src_dir }}/files/common/{{ item }}"
-    dest: "{{ ocp_work_dir }}"
-    remote_src: yes
-  loop:
-    - haproxy.cfg
-    - httpd.py
-
 - name: read the ssh public key file
   tags: ocp_public_key
   slurp:
