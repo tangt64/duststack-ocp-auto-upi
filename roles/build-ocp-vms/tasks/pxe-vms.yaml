@@ -60,6 +60,7 @@
     - 52:54:00:7d:2d:b8
   loop_control:
     index_var: idx
+  when: infra_node_enable == "yes"
 
 - name: build a worker as router nodes
   tags: build-router
@@ -74,3 +75,4 @@
     - 52:54:00:7d:2d:b0
   loop_control:
     index_var: idx
+  when: router_node_enable == "yes"

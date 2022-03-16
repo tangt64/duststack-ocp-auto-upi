@@ -27,10 +27,24 @@
   loop:
     - ocp-node-0
     - ocp-node-1
-    - ocp-infra-0
-    - ocp-infra-1
+
+- name: start ocp-router nodes
+  virt:
+    name: "{{ item }}"
+    state: running
+  loop:
     - ocp-router-0
     - ocp-router-1
+  when: router_node_enable == "yes"
+
+- name: start ocp-infra nodes
+  virt:
+    name: "{{ item }}"
+    state: running
+  loop:
+    - ocp-infra-0
+    - ocp-infra-1
+  when: infra_node_enable == "yes"
 
 - name: wait for OCP worker node VMs about 20 mins 
   pause:

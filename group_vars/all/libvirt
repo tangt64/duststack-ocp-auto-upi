@@ -2,6 +2,9 @@ libvirt_disk_size: 50G
 libvirtd_nested: false
 libvirtd_dns_server: "192.168.133.2,168.126.63.1"
 
+router_node_enable: no
+infra_node_enable: no
+
 utility_nodes_memory: 4096
 utility_nodes_cpu: 1
 haproxy_node_memory: 4096
