@@ -228,6 +228,11 @@
     - { src: 'kickstart-utility-rhel-8.cfg', dest: 'utility.ks' }
   when: ocp_rhel_os_variant == "rhel8.0"
 
+- name: copy httpd.py server on {{ ocp_work_dir }}
+  template:
+    src: httpd.py
+    dest: "{{ ocp_work_dir }}"
+
 - name: run httpd.py server 
   shell: nohup python3 {{ ocp_work_dir }}/httpd.py &
 
@@ -252,7 +257,6 @@
     tags: build-haproxy
     shell: virt-install --name {{ ocp_cluster_name }}-haproxy -r {{ utility_nodes_memory }} --vcpus {{ utility_nodes_cpu }} -l {{ rhel8_mirror_url }} --network network={{ ocp_vir_net }} --network network={{ ocp_vir_net_internal }} --graphics spice -v --disk=path=/var/lib/libvirt/images/{{ ocp_cluster_name }}-haproxy.qcow2,format=qcow2,size={{ libvirt_disk_size[:2] }} --noautoconsole -x ks="http://{{ ocp_ignition_url }}:8080/haproxy.ks biosdevname=0 net.ifnames=0"
   when: ocp_rhel_os_variant == "rhel8.0"
-
 
 - name: wait for build a VMs
   pause: 
